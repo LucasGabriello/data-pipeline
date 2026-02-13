@@ -1,0 +1,11 @@
+instalação do airflow
+
+1.baixar docker
+2.atualizar wsl
+3.criar pasta com o docker composer fornecido pelo airflow 
+4.criar pastas onde ficaram os volumes do docker(arquivos que permanecem apos o desligamento das imagens)
+5.criar o arquivo .env esperado pelo docker:    echo AIRFLOW_UID=50000 > .env
+6.executar para criar estrutura do container : docker-compose up airflow-init
+7.inicializar container: docker-compose up
+8.acessar a interface do navegador: localhost:8080
+9.finalizar container: docker-compose down
