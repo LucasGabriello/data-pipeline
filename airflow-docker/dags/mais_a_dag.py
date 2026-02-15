@@ -1,62 +1,51 @@
-from airflow.decorators import dag, task
-from airflow.providers.standard.operators.bash import BashOperator
 from datetime import datetime
-import pandas as pd
-import requests
-import json
+from airflow import DAG
+from airflow.operators.python import PythonOperator
 
-@dag(
-    dag_id='mais_a_dag_v3',
-    start_date=datetime(2026, 2, 13),
-    schedule='30 * * * *',
+from scripts.create_csv import create_csv
+
+with DAG(
+    dag_id="mais_a_dag",
+    start_date=datetime(2024, 1, 1),
+    schedule=None,
     catchup=False,
-    tags=['+a']
-)
+    tags=["api", "+a"],
+) as dag:
 
-
-#ingestão da API
-#criaçlão do csv
-#criação da base de dados
-
-
-def minha_dag_moderna():
-
-    @task
-    def ingestao_API():
-        url = "https://data.cityofnewyork.us/resource/rc75-m7u3.json"
-        response = requests.get(url)
-        df = pd.DataFrame(json.loads(response.content))
-        return len(df.index)
-
-    @task.branch
-    def e_valida(qtd: int):
-        if qtd > 1000:
-            return 'valido'
-        return 'nvalido'
-
-    #Python operator
-    valido = BashOperator(
-        task_id='ingestao_api',
-        bash_command="echo 'API OK'"
+    get_products = PythonOperator(
+        task_id="get_products",
+        python_callable=create_csv,
+        op_kwargs={
+            "endpoint": "https://fakestoreapi.com/products",
+            "name": "products",
+        },
     )
 
-    #Python operator
-    nvalido = BashOperator(
-        task_id='escrita_csv',
-        bash_command="echo 'CSVs OK'"
+    get_categories = PythonOperator(
+        task_id="get_categories",
+        python_callable=create_csv,
+        op_kwargs={
+            "endpoint": "https://fakestoreapi.com/products/categories",
+            "name": "categories",
+        },
     )
 
-    #Python operator
-    nvalido = BashOperator(
-        task_id='ingestao_tabelas',
-        bash_command="echo 'Tabelas Ingeridas'"
+    get_carts = PythonOperator(
+        task_id="get_carts",
+        python_callable=create_csv,
+        op_kwargs={
+            "endpoint": "https://fakestoreapi.com/carts",
+            "name": "carts",
+        },
     )
 
-    # O fluxo de dados e dependências fica muito mais limpo:
-    quantidade = captura_conta_dados()
-    decisao = e_valida(quantidade)
-    
-    decisao >> [valido, nvalido]
+    get_users = PythonOperator(
+        task_id="get_users",
+        python_callable=create_csv,
+        op_kwargs={
+            "endpoint": "https://fakestoreapi.com/users",
+            "name": "users",
+        },
+    )
 
-# Instancia a DAG
-minha_dag_moderna()
+    get_products >> get_categories >> get_carts >> get_users
