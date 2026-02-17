@@ -5,7 +5,7 @@ from airflow.operators.python import PythonOperator
 from scripts.create_csv import create_csv
 
 with DAG(
-    dag_id="mais_a_dag",
+    dag_id="csv_ingestion_dag",
     start_date=datetime(2024, 1, 1),
     schedule=None,
     catchup=False,
