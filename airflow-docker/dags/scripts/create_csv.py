@@ -4,24 +4,21 @@ def create_csv(endpoint: str, name: str):
     import requests
     import pandas as pd
 
-    # Caminho absoluto da pasta dags
-    base_path = os.path.dirname(os.path.dirname(__file__))
-    csv_path = os.path.join(base_path, "csv")
+    # Caminho dentro do container (volume)
+    csv_path = "/opt/airflow/data/landing"
 
     # Cria a pasta se não existir
     os.makedirs(csv_path, exist_ok=True)
 
-    link_api = endpoint
-    retorno = requests.get(link_api)
-    dados = retorno.json()
+    retorno = requests.get(endpoint)
+    retorno.raise_for_status()  # evita salvar CSV vazio se a API falhar
 
+    dados = retorno.json()
     df = pd.json_normalize(dados)
 
-    print(df.head())
-
-    # Caminho final do arquivo
     file_path = os.path.join(csv_path, f"{name}.csv")
 
     df.to_csv(file_path, index=False)
 
+    print(df.head())
     print(f"Arquivo salvo em: {file_path}")
