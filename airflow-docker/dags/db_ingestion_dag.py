@@ -118,4 +118,36 @@ with DAG(
         """,
     )
 
-    load_products >> load_users >> load_carts
+    load_cart_products = SQLExecuteQueryOperator(
+        task_id="load_cart_products",
+        conn_id="postgres-app",
+        sql="""
+        CREATE TEMP TABLE carts_stg (
+            id INTEGER,
+            userId INTEGER,
+            date TEXT,
+            products TEXT,
+            __v INTEGER
+        );
+
+        COPY carts_stg
+        FROM '/opt/airflow/data/landing/carts.csv'
+        DELIMITER ','
+        CSV HEADER
+        QUOTE '"';
+
+        TRUNCATE TABLE cart_products;
+
+        INSERT INTO cart_products (cart_id, product_id, quantity)
+        SELECT
+            c.id,
+            (item->>'productId')::INTEGER,
+            (item->>'quantity')::INTEGER
+        FROM carts_stg c,
+        LATERAL jsonb_array_elements(
+            replace(c.products, '''', '"')::jsonb
+        ) AS item;
+        """,
+    )
+
+    load_products >> load_users >> load_carts >> load_cart_products
