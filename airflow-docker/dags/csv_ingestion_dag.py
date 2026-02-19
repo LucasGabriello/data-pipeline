@@ -21,15 +21,6 @@ with DAG(
         },
     )
 
-    get_categories = PythonOperator(
-        task_id="get_categories",
-        python_callable=create_csv,
-        op_kwargs={
-            "endpoint": "https://fakestoreapi.com/products/categories",
-            "name": "categories",
-        },
-    )
-
     get_carts = PythonOperator(
         task_id="get_carts",
         python_callable=create_csv,
@@ -48,4 +39,4 @@ with DAG(
         },
     )
 
-    get_products >> get_categories >> get_carts >> get_users
+    get_products >> get_carts >> get_users
